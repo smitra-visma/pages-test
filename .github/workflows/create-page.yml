@@ -1,0 +1,57 @@
+name: Create HTML Page
+
+on:
+  workflow_dispatch:
+    inputs:
+      page_title:
+        description: 'Page title'
+        required: false
+        default: 'Hello World'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  create-page:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create HTML page
+        run: |
+          mkdir -p _site
+          cat > _site/index.html << EOF
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${{ github.event.inputs.page_title }}</title>
+            <style>
+              body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; }
+              h1 { color: #333; }
+            </style>
+          </head>
+          <body>
+            <h1>${{ github.event.inputs.page_title }}</h1>
+          </body>
+          </html>
+          EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
